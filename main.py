@@ -20,7 +20,7 @@ class CLI(Resource):
         command = command
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(host, port, username, password)
+        ssh.connect(host, port, username, password, look_for_keys=False)
         stdin, stdout, stderr = ssh.exec_command(command)
         lines = stdout.readlines()
         print(lines)
