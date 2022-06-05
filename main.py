@@ -5,12 +5,6 @@ import paramiko
 app = Flask(__name__)
 api = Api(app)
 
-#class HelloWorld(Resource):
-#    def get(self, name, test):
-#        return {'name': name, 'test': test}
-
-#api.add_resource(HelloWorld, "/helloworld/<string:name>/<int:test>")
-
 class CLI(Resource):
     def get(self,command):
         host="sandbox-iosxe-recomm-1.cisco.com"
@@ -24,8 +18,7 @@ class CLI(Resource):
         stdin, stdout, stderr = ssh.exec_command(command)
         lines = stdout.readlines()
         formatted_lines = ' '.join(map(str, lines))
-        print(formatted_lines)
-        return {'stdout':formatted_lines}
+        return formatted_lines
 
 api.add_resource(CLI, "/cli/<string:command>")
 
