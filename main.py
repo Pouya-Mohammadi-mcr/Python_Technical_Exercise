@@ -23,8 +23,9 @@ class CLI(Resource):
         ssh.connect(host, port, username, password, look_for_keys=False)
         stdin, stdout, stderr = ssh.exec_command(command)
         lines = stdout.readlines()
-        print(lines)
-        return {'stdout':lines}
+        formatted_lines = ' '.join(map(str, lines))
+        print(formatted_lines)
+        return {'stdout':formatted_lines}
 
 api.add_resource(CLI, "/cli/<string:command>")
 
