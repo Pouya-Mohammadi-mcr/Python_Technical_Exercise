@@ -35,6 +35,9 @@ api.add_resource(CLI, "/cli/<string:command>")
 
 class Loopback(Resource):
 
+    host='sandbox-iosxe-recomm-1.cisco.com'
+    username='developer'
+    password='C1sco12345'
 
     def put(self, name):
         args = loopback_put_args.parse_args()
@@ -76,12 +79,11 @@ class Loopback(Resource):
         print("Opening NETCONF Connection to {'sandbox-iosxe-recomm-1.cisco.com'}")
 
 # Open a connection to the network device using ncclient
-#- Reusability (could one easily use it against any other network device of the same make/model)
         with manager.connect(
-                host='sandbox-iosxe-recomm-1.cisco.com',
+                host=self.host,
                 port=830,
-                username='developer',
-                password='C1sco12345',
+                username=self.username,
+                password=self.password,
                 hostkey_verify=False
                 ) as m:
 
