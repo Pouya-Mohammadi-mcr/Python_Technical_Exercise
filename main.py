@@ -13,6 +13,9 @@ loopback_put_args.add_argument("description", type=str, help="description for th
 loopback_put_args.add_argument("ip_address", type=str, help="ip_address for the loopback is required", required=True)
 loopback_put_args.add_argument("mask", type=str, help="mask for the loopback is required", required=True)
 
+loopback_delete_args = reqparse.RequestParser()
+loopback_delete_args.add_argument("dry_run", type=bool)
+
 class CLI(Resource):
     def get(self,command):
         host="sandbox-iosxe-recomm-1.cisco.com"
@@ -68,7 +71,7 @@ class Loopback(Resource):
 
         # Create the NETCONF data payload for this interface
         netconf_data = netconf_interface_template.format(
-                name = name,
+                name = 'Loopback'+name,
                 desc = args["description"],
                 type = "ianaift:softwareLoopback",
                 status = "true",
@@ -86,15 +89,57 @@ class Loopback(Resource):
                 ) as m:
 
             if self.dry_run == True:
-            # Return the generated payload (to be sent to the device) back to the user
+                # Return the generated payload (to be sent to the device) back to the user
                 return(xml.dom.minidom.parseString(netconf_data).toprettyxml())
             else:
-                # Make a NETCONF <get-config> query using the filter
-                netconf_reply = m.edit_config(netconf_data, target = 'running')
-        
+                try:
+                    # Make a NETCONF <get-config> query using the filter
+                    netconf_reply = m.edit_config(netconf_data, target = 'running')
+                except:
+                    # If the loopback to be created is invalid
+                    return 'Inconsistent value'
+
         # Return the returned XML
         return(xml.dom.minidom.parseString(netconf_reply.xml).toprettyxml())
 
+    def delete(self, name):
+
+        args = loopback_delete_args.parse_args()
+        self.dry_run = args['dry_run']
+
+        netconf_interface_template = """
+        <config>
+                <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+                        <interface operation="delete">
+                                <name>{name}</name>
+                        </interface>
+                </interfaces>
+        </config>
+        """ 
+        netconf_data = netconf_interface_template.format(name = name)
+
+
+        # Open a connection to the network device using ncclient
+        with manager.connect(
+                host=self.host,
+                port=830,
+                username=self.username,
+                password=self.password,
+                hostkey_verify=False
+                ) as m:
+
+            if self.dry_run == True:
+                # Return the generated payload (to be sent to the device) back to the user
+                return(xml.dom.minidom.parseString(netconf_data).toprettyxml())
+            else:
+                try:
+                    # Make a NETCONF <get-config> query using the filter
+                    netconf_reply = m.edit_config(netconf_data, target = 'running')
+                except:
+                    # If the loopback to be deleted is invalid
+                    return 'Invalid loopback'
+        # Return the returned XML
+        return(xml.dom.minidom.parseString(netconf_reply.xml).toprettyxml())
 
 api.add_resource(Loopback, "/loopback/<string:name>")
 
