@@ -35,12 +35,15 @@ api.add_resource(CLI, "/cli/<string:command>")
 
 class Loopback(Resource):
 
+    dry_run = False
     host='sandbox-iosxe-recomm-1.cisco.com'
     username='developer'
     password='C1sco12345'
 
     def put(self, name):
         args = loopback_put_args.parse_args()
+        self.dry_run = args['dry_run']
+
 
         # Create an XML configuration template for ietf-interfaces
         netconf_interface_template = """
@@ -73,12 +76,7 @@ class Loopback(Resource):
                 mask = args["mask"]
             )
 
-        print("The configuration payload to be sent over NETCONF.\n")
-        print(netconf_data)
-
-        print("Opening NETCONF Connection to {'sandbox-iosxe-recomm-1.cisco.com'}")
-
-# Open a connection to the network device using ncclient
+        # Open a connection to the network device using ncclient
         with manager.connect(
                 host=self.host,
                 port=830,
@@ -87,14 +85,14 @@ class Loopback(Resource):
                 hostkey_verify=False
                 ) as m:
 
-            print("Sending a <edit-config> operation to the device.\n")
-            # Make a NETCONF <get-config> query using the filter
-            netconf_reply = m.edit_config(netconf_data, target = 'running')
-
-        print("Here is the raw XML data returned from the device.\n")
-        # Print out the raw XML that returned
-        print(xml.dom.minidom.parseString(netconf_reply.xml).toprettyxml())
-        print("")
+            if self.dry_run == True:
+            # Return the generated payload (to be sent to the device) back to the user
+                return(xml.dom.minidom.parseString(netconf_data).toprettyxml())
+            else:
+                # Make a NETCONF <get-config> query using the filter
+                netconf_reply = m.edit_config(netconf_data, target = 'running')
+        
+        # Return the returned XML
         return(xml.dom.minidom.parseString(netconf_reply.xml).toprettyxml())
 
 

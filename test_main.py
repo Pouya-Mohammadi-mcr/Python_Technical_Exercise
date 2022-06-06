@@ -24,8 +24,11 @@ class TestCase(unittest.TestCase):
 
     def test_configure_loopback(self):
         response = requests.put(self.base + "loopback/Loopback1", { 'description': 'test loopback', 'ip_address':'10.1.1.1', 'mask':'255.255.255.0'})
-        print (response.json())
-        self.assertEqual(200, response.status_code)
+        self.assertTrue('ok' in response.text)
+
+    def test_configure_loopback_dry_run(self):
+        response = requests.put(self.base + "loopback/Loopback1", {'dry_run': True, 'description': 'test loopback', 'ip_address':'10.1.1.1', 'mask':'255.255.255.0'})
+        self.assertTrue('<config>' in response.text)
 
 #Should be tested when credential are given by the user
 #    def test_CLI_connection_failed(self):
