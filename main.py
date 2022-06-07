@@ -29,8 +29,7 @@ class CLI(Resource):
             ssh.connect(host, port, username, password, look_for_keys=False)
             stdin, stdout, stderr = ssh.exec_command(command)
             lines = stdout.readlines()
-            formatted_lines = ' '.join(map(str, lines))
-            return formatted_lines
+            return lines
         except:
             return 'Connection failed'
 
