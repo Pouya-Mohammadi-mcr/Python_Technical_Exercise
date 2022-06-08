@@ -9,7 +9,7 @@ class TestCase(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_CLI_interface(self):
+    def test_CLI_command(self):
         response = requests.get(self.base + "cli/sh ip int br")
         self.assertTrue('Interface' and 'IP-Address' and 'Status' and 'Method' and 'Protocol' in response.text)
 
