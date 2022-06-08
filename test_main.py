@@ -47,10 +47,10 @@ class TestCase(unittest.TestCase):
 
     def test_configure_loopback_dry_run(self):
         response = requests.put(self.base + "loopback/3", {'dry_run': True, 'description': 'test loopback', 'ip_address':'10.1.1.1', 'mask':'255.255.255.0'})
-        self.assertTrue('<config>' in response.text)
+        self.assertTrue('<config' in response.text)
 
     def test_delete_loopback(self):
-        # Loopback created in set-up phase
+        # Set-up the loopback to delete
         requests.put(self.base + "loopback/1", { 'description': 'test loopback', 'ip_address':'10.1.1.1', 'mask':'255.255.255.0'})
         response = requests.delete(self.base + "loopback/Loopback1")
         self.assertTrue('ok' in response.text)
@@ -61,7 +61,7 @@ class TestCase(unittest.TestCase):
 
     def test_delete_loopback_dry_run(self):
         response = requests.delete(self.base + "loopback/3", data={'dry_run': True})
-        self.assertTrue('<config>' in response.text)
+        self.assertTrue('<config' in response.text)
         
 #Should be tested when credential are given by the user
 #    def test_CLI_connection_failed(self):

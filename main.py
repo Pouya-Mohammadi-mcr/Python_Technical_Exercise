@@ -3,6 +3,7 @@ from flask_restful import Api, Resource, reqparse
 import paramiko
 from ncclient import manager
 import xml.dom.minidom
+import logging
 
 app = Flask(__name__)
 api = Api(app)
@@ -18,7 +19,7 @@ loopback_delete_args.add_argument("dry_run", type=bool)
 
 class CLI(Resource):
     def get(self,command):
-        host="sandbox-iosxe-recomm-1.cisco.com"
+        host="sandbox-iosxe-latest-1.cisco.com"
         port=22
         username="developer"
         password="C1sco12345"
@@ -38,7 +39,7 @@ api.add_resource(CLI, "/cli/<string:command>")
 class Loopback(Resource):
 
     dry_run = False
-    host='sandbox-iosxe-recomm-1.cisco.com'
+    host='sandbox-iosxe-latest-1.cisco.com'
     username='developer'
     password='C1sco12345'
 
@@ -49,8 +50,7 @@ class Loopback(Resource):
 
         # Create an XML configuration template for ietf-interfaces
         netconf_interface_template = """
-        <config>
-            <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+        <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">            <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
                 <interface>
                     <name>{name}</name>
                     <description>{desc}</description>
@@ -94,7 +94,8 @@ class Loopback(Resource):
                 try:
                     # Make a NETCONF <get-config> query using the filter
                     netconf_reply = m.edit_config(netconf_data, target = 'running')
-                except:
+                except Exception:
+                    logging.exception(Exception)
                     # If the loopback to be created is invalid
                     return 'Inconsistent value'
 
@@ -107,8 +108,7 @@ class Loopback(Resource):
         self.dry_run = args['dry_run']
 
         netconf_interface_template = """
-        <config>
-                <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+        <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">                <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
                         <interface operation="delete">
                                 <name>{name}</name>
                         </interface>
@@ -134,8 +134,8 @@ class Loopback(Resource):
                 try:
                     # Make a NETCONF <get-config> query using the filter
                     netconf_reply = m.edit_config(netconf_data, target = 'running')
-                except:
-                    # If the loopback to be deleted is invalid
+                except Exception:
+                    logging.exception(Exception)                    # If the loopback to be deleted is invalid
                     return 'Invalid loopback'
         # Return the returned XML
         return(xml.dom.minidom.parseString(netconf_reply.xml).toprettyxml())
