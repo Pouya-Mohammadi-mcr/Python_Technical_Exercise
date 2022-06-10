@@ -12,12 +12,12 @@ loopback_put_args = reqparse.RequestParser()
 loopback_put_args.add_argument("dry_run", type=bool)
 loopback_put_args.add_argument(
                             "description", type=str,
-                            help="description for the loopback is required",
+                            help="Loopback description is required",
                             required=True
                             )
 loopback_put_args.add_argument(
                             "ip_address", type=str,
-                            help="ip_address for the loopback is required",
+                            help="Loopback ip_address is required",
                             required=True
                             )
 loopback_put_args.add_argument(
