@@ -4,7 +4,7 @@ import requests
 
 class TestCase(unittest.TestCase):
 
-    base = "http://0.0.0.0:5001/"
+    base = "http://127.0.0.1/"
 
     def setUp(self):
         pass
@@ -76,16 +76,21 @@ class TestCase(unittest.TestCase):
                     'ip_address': '10.1.1.1',
                     'mask': '255.255.255.0'})
         response = requests.delete(self.base + "loopback/Loopback1")
+        print(response.text)
         self.assertTrue('ok' in response.text)
 
     def test_delete_invalid_loopback(self):
         response = requests.delete(self.base + "loopback/Loopbackinvalid123")
+        print(response.text)
+
         self.assertEqual('"Invalid loopback"\n',  response.text)
 
     def test_delete_loopback_dry_run(self):
         response = requests.delete(
                                 self.base + "loopback/3",
                                 data={'dry_run': True})
+        print(response.text)
+
         self.assertTrue('<config' in response.text)
 
 # Should be tested when credential are given by the user

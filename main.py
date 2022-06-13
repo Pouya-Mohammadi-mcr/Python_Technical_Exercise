@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from flask_restful import Api, Resource, reqparse
 import paramiko
 from ncclient import manager
@@ -27,7 +27,7 @@ loopback_put_args.add_argument(
                             )
 
 loopback_delete_args = reqparse.RequestParser()
-loopback_delete_args.add_argument("dry_run", type=bool)
+loopback_delete_args.add_argument("dry_run", type=bool, default='false')
 
 
 class CLI(Resource):
@@ -54,7 +54,6 @@ api.add_resource(CLI, "/cli/<string:command>")
 
 class Loopback(Resource):
 
-    dry_run = False
     host = 'sandbox-iosxe-latest-1.cisco.com'
     username = 'developer'
     password = 'C1sco12345'
@@ -122,9 +121,9 @@ class Loopback(Resource):
 
     def delete(self, name):
 
-        args = loopback_delete_args.parse_args()
-        self.dry_run = args['dry_run']
-
+#        args = loopback_delete_args.parse_args()
+#        self.dry_run = args['dry_run']
+        dry_run = request.form.get('dry_run', False)
         netconf_interface_template = """
         <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0"
           xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
@@ -145,7 +144,7 @@ class Loopback(Resource):
                 hostkey_verify=False
                 ) as m:
 
-            if self.dry_run is True:
+            if dry_run is True:
                 # Return the generated payload
                 # (to be sent to the device) back to the user
                 return(xml.dom.minidom.parseString(netconf_data).toprettyxml())
@@ -154,9 +153,8 @@ class Loopback(Resource):
                     # Make a NETCONF <get-config> query using the filter
                     nc_reply = m.edit_config(netconf_data, target='running')
                 except Exception:
-                    # If the loopback to be deleted is invalid
                     logging.exception(Exception)
-                    return 'Invalid loopback'
+                    return Exception
         # Return the returned XML
         return(xml.dom.minidom.parseString(nc_reply.xml).toprettyxml())
 
