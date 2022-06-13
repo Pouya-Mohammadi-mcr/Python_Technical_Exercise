@@ -4,7 +4,7 @@ import requests
 
 class TestCase(unittest.TestCase):
 
-    base = "http://0.0.0.0:5001/"
+    base = "http://0.0.0.0:80/"
 
     def setUp(self):
         pass
