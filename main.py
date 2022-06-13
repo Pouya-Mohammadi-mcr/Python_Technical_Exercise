@@ -121,8 +121,6 @@ class Loopback(Resource):
 
     def delete(self, name):
 
-#        args = loopback_delete_args.parse_args()
-#        self.dry_run = args['dry_run']
         dry_run = request.form.get('dry_run', False)
         netconf_interface_template = """
         <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0"
