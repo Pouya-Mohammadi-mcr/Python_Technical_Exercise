@@ -27,42 +27,49 @@ class TestCase(unittest.TestCase):
         self.assertEqual(404, response.status_code)
 
     def test_configure_loopback(self):
-        response = requests.put(self.base + "loopback/1", {
+        response = requests.put(self.base + "loopback/1", json={
                 'description': 'test loopback',
                 'ip_address': '10.1.1.1',
                 'mask': '255.255.255.0'})
         self.assertTrue('ok' in response.text)
 
+    def test_configure_loopback_no_json(self):
+        response = requests.put(self.base + "loopback/1")
+        self.assertEqual('"bad request"\n', response.text)
+
     def test_configure_loopback_no_description(self):
-        response = requests.put(self.base + "loopback/3", {
+        response = requests.put(self.base + "loopback/3", json={
                 'no_description': 'test loopback',
                 'ip_address': '10.1.1.1',
                 'mask': '255.255.255.0'})
+
         self.assertTrue('Loopback description is required' in response.text)
 
     def test_configure_loopback_no_ip(self):
-        response = requests.put(self.base + "loopback/3", {
+        response = requests.put(self.base + "loopback/3", json={
                 'description': 'test loopback',
                 'no_ip_address': '10.1.1.1',
                 'mask': '255.255.255.0'})
         self.assertTrue('Loopback ip_address is required' in response.text)
 
     def test_configure_loopback_no_mask(self):
-        response = requests.put(self.base + "loopback/3", {
+        response = requests.put(self.base + "loopback/3", json={
                 'description': 'test loopback',
                 'ip_address': '10.1.1.1',
                 'no_mask': '255.255.255.0'})
         self.assertTrue('mask for the loopback is required' in response.text)
 
     def test_configure_loopback_invalid_ip_mask(self):
-        response = requests.put(self.base + "loopback/3", {
+        response = requests.put(self.base + "loopback/3", json={
                 'description': 'test loopback',
                 'ip_address': '1.1.1.1',
                 'mask': '0.0.0.0'})
-        self.assertEqual('"Inconsistent value"\n', response.text)
+        self.assertEqual(
+            '"inconsistent value: Device refused one or more commands"\n',
+            response.text)
 
     def test_configure_loopback_dry_run(self):
-        response = requests.put(self.base + "loopback/3", {
+        response = requests.put(self.base + "loopback/3", json={
                     'dry_run': True,
                     'description': 'test loopback',
                     'ip_address': '10.1.1.1',
@@ -71,26 +78,21 @@ class TestCase(unittest.TestCase):
 
     def test_delete_loopback(self):
         # Set-up the loopback to delete
-        requests.put(self.base + "loopback/1", {
+        requests.put(self.base + "loopback/1", json={
                     'description': 'test loopback',
                     'ip_address': '10.1.1.1',
                     'mask': '255.255.255.0'})
         response = requests.delete(self.base + "loopback/Loopback1")
-        print(response.text)
         self.assertTrue('ok' in response.text)
 
     def test_delete_invalid_loopback(self):
         response = requests.delete(self.base + "loopback/Loopbackinvalid123")
-        print(response.text)
-
-        self.assertEqual('"Invalid loopback"\n',  response.text)
+        self.assertTrue('<bad-element>' in response.text)
 
     def test_delete_loopback_dry_run(self):
         response = requests.delete(
                                 self.base + "loopback/3",
-                                data={'dry_run': True})
-        print(response.text)
-
+                                json={'dry_run': True})
         self.assertTrue('<config' in response.text)
 
 # Should be tested when credential are given by the user

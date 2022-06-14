@@ -1,5 +1,5 @@
 from flask import Flask, request
-from flask_restful import Api, Resource, reqparse
+from flask_restful import Api, Resource
 import paramiko
 from ncclient import manager
 import xml.dom.minidom
@@ -7,27 +7,6 @@ import logging
 
 app = Flask(__name__)
 api = Api(app)
-
-loopback_put_args = reqparse.RequestParser()
-loopback_put_args.add_argument("dry_run", type=bool)
-loopback_put_args.add_argument(
-                            "description", type=str,
-                            help="Loopback description is required",
-                            required=True
-                            )
-loopback_put_args.add_argument(
-                            "ip_address", type=str,
-                            help="Loopback ip_address is required",
-                            required=True
-                            )
-loopback_put_args.add_argument(
-                            "mask", type=str,
-                            help="mask for the loopback is required",
-                            required=True
-                            )
-
-loopback_delete_args = reqparse.RequestParser()
-loopback_delete_args.add_argument("dry_run", type=bool, default='false')
 
 
 class CLI(Resource):
@@ -59,9 +38,21 @@ class Loopback(Resource):
     password = 'C1sco12345'
 
     def put(self, name):
-        args = loopback_put_args.parse_args()
-        self.dry_run = args['dry_run']
-
+        try:
+            args = request.get_json(cache=False, force=True)
+            if 'description' not in args:
+                return "Loopback description is required", 400
+            if 'ip_address' not in args:
+                return "Loopback ip_address is required", 400
+            if 'mask' not in args:
+                return "mask for the loopback is required", 400
+            if 'dry_run' not in args:
+                dry_run = False
+            elif args["dry_run"] is True:
+                dry_run = args['dry_run']
+        except Exception as e:
+            logging.info(str(e))
+            return "bad request", 400
 
 # Create an XML configuration template for ietf-interfaces
         nci_template = """
@@ -103,7 +94,7 @@ class Loopback(Resource):
                 hostkey_verify=False
                 ) as m:
 
-            if self.dry_run is True:
+            if dry_run is True:
                 # Return the generated payload
                 # (to be sent to the device) back to the user
                 return(xml.dom.minidom.parseString(nc_data).toprettyxml())
@@ -111,17 +102,23 @@ class Loopback(Resource):
                 try:
                     # Make a NETCONF <get-config> query using the filter
                     netconf_reply = m.edit_config(nc_data, target='running')
-                except Exception:
-                    logging.exception(Exception)
-                    # If the loopback to be created is invalid
-                    return 'Inconsistent value'
+                except Exception as e:
+                    return str(e)
 
         # Return the returned XML
         return(xml.dom.minidom.parseString(netconf_reply.xml).toprettyxml())
 
     def delete(self, name):
+        try:
+            args = request.get_json(cache=False, force=True)
+            if 'dry_run' not in args:
+                dry_run = False
+            elif args["dry_run"] is True:
+                dry_run = args['dry_run']
+        except Exception as noJSON:
+            logging.info(str(noJSON))
+            dry_run = False
 
-        dry_run = request.form.get('dry_run', False)
         netconf_interface_template = """
         <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0"
           xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
@@ -150,9 +147,9 @@ class Loopback(Resource):
                 try:
                     # Make a NETCONF <get-config> query using the filter
                     nc_reply = m.edit_config(netconf_data, target='running')
-                except Exception:
-                    logging.exception(Exception)
-                    return Exception
+                    print(nc_reply)
+                except Exception as e:
+                    return str(e)
         # Return the returned XML
         return(xml.dom.minidom.parseString(nc_reply.xml).toprettyxml())
 
