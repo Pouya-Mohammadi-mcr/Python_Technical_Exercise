@@ -10,11 +10,17 @@ api = Api(app)
 
 
 class CLI(Resource):
+
+    host = "sandbox-iosxe-latest-1.cisco.com"
+    port = 22
+    username = "developer"
+    password = "C1sco12345"
+
     def get(self, command):
-        host = "sandbox-iosxe-latest-1.cisco.com"
-        port = 22
-        username = "developer"
-        password = "C1sco12345"
+        host = self.host
+        port = self.port
+        username = self.username
+        password = self.password
         command = command
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -39,13 +45,18 @@ class Loopback(Resource):
 
     def put(self, name):
         try:
+            # JSON must be passed
             args = request.get_json(cache=False, force=True)
+            # Description is required
             if 'description' not in args:
                 return "Loopback description is required", 400
+            # IP_address is required
             if 'ip_address' not in args:
                 return "Loopback ip_address is required", 400
+            # Mask is required
             if 'mask' not in args:
                 return "mask for the loopback is required", 400
+            # Dry_run is optional
             if 'dry_run' not in args:
                 dry_run = False
             elif args["dry_run"] is True:
@@ -54,7 +65,7 @@ class Loopback(Resource):
             logging.info(str(e))
             return "bad request", 400
 
-# Create an XML configuration template for ietf-interfaces
+        # Create an XML configuration template for ietf-interfaces
         nci_template = """
         <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0"
           xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
@@ -110,6 +121,7 @@ class Loopback(Resource):
 
     def delete(self, name):
         try:
+            # Can have dry_run option requested in JSON
             args = request.get_json(cache=False, force=True)
             if 'dry_run' not in args:
                 dry_run = False
@@ -119,6 +131,7 @@ class Loopback(Resource):
             logging.info(str(noJSON))
             dry_run = False
 
+        # Create an XML configuration template for ietf-interfaces
         netconf_interface_template = """
         <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0"
           xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
